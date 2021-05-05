@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# GIS data
+spatial
+
+# LOS.R script
+LOS.R
