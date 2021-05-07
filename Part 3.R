@@ -14,12 +14,14 @@ library(dplyr)
 # Elevation ####
 elevation <- raster("www/spatial/elevation.tif")
 plot(elevation)
+elevation_500 <- aggregate(elevation, fact=10)
+# Convert to latlong - code is 4326
+ll_crs <- CRS("+init=epsg:4326") 
+elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
 
 # Change colours so green = low, brown = high
 plot(elevation, col = terrain.colors(30)) # 30 categories
 
-# Convert to latlong - code is 4326
-ll_crs <- CRS("+init=epsg:4326")
 elevation_ll <- projectRaster(elevation, crs = ll_crs)
 mapview(elevation_ll) # interactive
 
@@ -95,7 +97,7 @@ plot(roads, add = TRUE)
 plot(settlements, add = TRUE)
 
 # Make the map interactive with optional layers
-leaflet() %>% 
+cumbria_map <- leaflet() %>% 
   addTiles(group = "OSM (default)") %>% 
   addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
 # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour

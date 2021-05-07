@@ -1,5 +1,7 @@
 # Shiny reptiles app
 
+# Packages and data import
+
 library(shiny)
 library(leaflet)
 library(leafem)
@@ -10,13 +12,44 @@ library(raster)
 library(ggplot2)
 library(dplyr)
 
-# Import all relevant data ----
-
-# Add reptile images
+# Add reptile images ----
 adder_image <- base64enc::dataURI(file="www/adder_image.jpeg", mime="image/jpeg")
 common_image <- base64enc::dataURI(file="www/common_lizard_image.jpeg", mime="image/jpeg")
 grass_image <- base64enc::dataURI(file="www/grass_snake_image.jpeg", mime="image/jpeg")
 slow_image <- base64enc::dataURI(file="www/slow_worm_image.jpeg", mime="image/jpeg")
+
+# Add map features ----
+elevation <- raster("www/spatial/elevation.tif")
+ll_crs <- CRS("+init=epsg:4326")
+elevation_ll <- projectRaster(elevation, crs = ll_crs)
+elevation_500 <- aggregate(elevation, fact=10)
+elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
+
+lakes <- st_read("www/spatial/cumbria_lakes.shp")
+lakes <- lakes %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+lakes_ll <- st_transform(lakes, 4326)
+
+rivers <- st_read("www/spatial/cumbria_rivers.shp")
+rivers <- rivers %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+rivers_ll <- st_transform(rivers, 4326) 
+
+roads <- st_read("www/spatial/cumbria_roads.shp")
+roads <- roads %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+roads_ll <- st_transform(roads, 4326) 
+
+settlements <- st_read("www/spatial/cumbria_settlements.shp")
+settlements <- settlements %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+settlements_ll <- st_transform(settlements, 4326)
+
+
 
 # Define UI ----
 
@@ -28,7 +61,8 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         id = "tabset",
-        tabPanel("Overview" 
+        tabPanel("Overview",
+                 leafletOutput(outputId = "cumbria_map")
                  ),
         tabPanel("Adder",
                  img(src=adder_image, height="50%", width="50%", align="right")
@@ -42,16 +76,43 @@ ui <- fluidPage(
         tabPanel("Slow Worm",
                  img(src=slow_image, height="50%", width="50%", align="right")
                  )
-      )
-    )
-  )
-)
+      ) # tabsetPanel
+    ) # mainPanel
+  ) # sidebarLayout
+) # fluidPage
 
 # Define server logic ----
 
 server <- function(input, output, session) {
+  # Code for tabs
   output$panel <- renderText({
     paste("Current panel: ", input$tabset)
+  })
+  
+  # Output for the cumbria map
+  output$cumbria_map <- renderLeaflet({
+    leaflet() %>% 
+      addTiles(group = "OSM (default)") %>% 
+      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+      # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+      addFeatures(lakes_ll, group = "Lakes",
+                  stroke = TRUE, weight = 1) %>% 
+      addFeatures(rivers_ll, group = "Rivers",
+                  stroke = TRUE, weight = 1) %>%
+      addFeatures(roads_ll, group = "Roads",
+                  stroke = TRUE, weight = 1, color = "red") %>%
+      addFeatures(settlements_ll, group = "Urban areas",
+                  stroke = TRUE, weight = 1, color = "black") %>%
+      addRasterImage(elevation_500_ll, col = terrain.colors(25), 
+                     opacity = 0.6, group = "Elevation") %>%
+      # Hide groups so they don't automatically show
+      hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+      # Allow the user to choose which layers they want to see
+      addLayersControl(
+        baseGroups = c("OSM (default)", "Satellite"), 
+        overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+        options = layersControlOptions(collapsed = FALSE)
+      )
   })
 }
 
