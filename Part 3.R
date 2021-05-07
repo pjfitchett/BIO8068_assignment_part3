@@ -6,6 +6,8 @@ library(mapview)
 options("rgdal_show_exportToProj4_warnings"="none")
 library(sf)
 library(raster)
+library(ggplot2)
+library(dplyr)
 
 # Import data
 
@@ -202,13 +204,123 @@ ggplot(records_per_yr_grass, aes(x = year.processed, y=count_per_year)) +
 grass_map <- addProviderTiles(leaflet(),"Esri.WorldImagery") %>%
   addCircleMarkers(grass$decimalLongitude.processed, grass$decimalLatitude.processed,  
                    radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
-  addLegend(colors = "red", opacity=1, labels="Grass Snake")
+  addLegend(colors = "red", opacity=1, labels="Grass Snake") 
 grass_map
 
 
+# Interactive maps that also show the species distribution ####
 
+# Common lizard
+common_map <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+  addLegend(colors = "red", opacity=1, labels="Common Lizard") %>%
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+common_map
 
+# Adder
+adder_map <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+  addLegend(colors = "red", opacity=1, labels="Adder") %>%
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+adder_map
 
+# Slow worm
+slow_map <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  addCircleMarkers(slow$decimalLongitude.processed, slow$decimalLatitude.processed,  
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+  addLegend(colors = "red", opacity=1, labels="Slow Worm") %>%
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+slow_map
+
+# Grass snake
+grass_map <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  addCircleMarkers(grass$decimalLongitude.processed, grass$decimalLatitude.processed,  
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+  addLegend(colors = "red", opacity=1, labels="Grass Snake") %>%
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+grass_map
 
 
 
