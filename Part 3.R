@@ -137,10 +137,14 @@ ggplot(records_per_yr_common, aes(x = year.processed, y=count_per_year)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Year") +
   ylab("Number of records")
+
+# Create a variable containing year to use as a popup on a map
+common_year <- paste("Year: ", common$year.processed)
 # Create a map showing records of common lizard
 common_map <- addProviderTiles(leaflet(),"Esri.WorldImagery") %>%
   addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = common_year) %>%
   addLegend(colors = "red", opacity=1, labels="Common Lizard")
 common_map
 
@@ -158,6 +162,9 @@ ggplot(records_per_yr_adder, aes(x = year.processed, y=count_per_year)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Year") +
   ylab("Number of records")
+
+# Create a variable containing year to use as a popup on a map
+adder_year <- paste("Year: ", adder$year.processed)
 # Create a map showing records of adder
 adder_map <- addProviderTiles(leaflet(),"Esri.WorldImagery") %>%
   addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
@@ -179,10 +186,14 @@ ggplot(records_per_yr_slow, aes(x = year.processed, y=count_per_year)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Year") +
   ylab("Number of records")
+
+# Create a variable containing year to use as a popup on a map
+slow_year <- paste("Year: ", slow$year.processed)
 # Create a map showing records of slow worm
 slow_map <- addProviderTiles(leaflet(),"Esri.WorldImagery") %>%
   addCircleMarkers(slow$decimalLongitude.processed, slow$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = slow_year) %>%
   addLegend(colors = "red", opacity=1, labels="Slow Worm")
 slow_map
 
@@ -200,6 +211,9 @@ ggplot(records_per_yr_grass, aes(x = year.processed, y=count_per_year)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Year") +
   ylab("Number of records")
+
+# Create a variable containing year to use as a popup on a map
+grass_year <- paste("Year: ", grass$year.processed)
 # Create a map showing records of grass snake
 grass_map <- addProviderTiles(leaflet(),"Esri.WorldImagery") %>%
   addCircleMarkers(grass$decimalLongitude.processed, grass$decimalLatitude.processed,  
@@ -215,7 +229,8 @@ common_map <- leaflet() %>%
   addTiles(group = "OSM (default)") %>% 
   addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
   addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = common_year) %>%
   addLegend(colors = "red", opacity=1, labels="Common Lizard") %>%
   # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
   addFeatures(lakes_ll, group = "Lakes",
@@ -243,7 +258,8 @@ adder_map <- leaflet() %>%
   addTiles(group = "OSM (default)") %>% 
   addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
   addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = adder_year) %>%
   addLegend(colors = "red", opacity=1, labels="Adder") %>%
   # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
   addFeatures(lakes_ll, group = "Lakes",
@@ -271,7 +287,8 @@ slow_map <- leaflet() %>%
   addTiles(group = "OSM (default)") %>% 
   addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
   addCircleMarkers(slow$decimalLongitude.processed, slow$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = slow_year) %>%
   addLegend(colors = "red", opacity=1, labels="Slow Worm") %>%
   # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
   addFeatures(lakes_ll, group = "Lakes",
@@ -299,7 +316,8 @@ grass_map <- leaflet() %>%
   addTiles(group = "OSM (default)") %>% 
   addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
   addCircleMarkers(grass$decimalLongitude.processed, grass$decimalLatitude.processed,  
-                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red") %>%
+                   radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                   popup = grass_year) %>%
   addLegend(colors = "red", opacity=1, labels="Grass Snake") %>%
   # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
   addFeatures(lakes_ll, group = "Lakes",
