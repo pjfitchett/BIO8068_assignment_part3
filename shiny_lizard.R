@@ -54,17 +54,43 @@ settlements_ll <- st_transform(settlements, 4326)
 # Define UI ----
 
 ui <- fluidPage(
+  
+  titlePanel(
+    h1("Reptiles in Cumbria")),
+  
   sidebarLayout(
     sidebarPanel(
-      textOutput("panel")
+      p("The maps on this app show Cumbria and have a few different layers",
+        "to help you explore the area.  You can choose to include different ",
+        "features including elevation, roads, freshwater such as",
+        "rivers and lakes, or urban areas.")
     ),
+    
     mainPanel(
       tabsetPanel(
         id = "tabset",
         tabPanel("Overview",
-                 leafletOutput(outputId = "cumbria_map")
+                 leafletOutput(outputId = "cumbria_map"),
+                 h2("Cumbria"),
+                 p("Cumbria is located in the North West of England and is",
+                   "home to the Lake District National Park.  This picturesque",
+                   "area is a popular holiday destination for over", strong("15 million"),
+                   "visitors every year.  As well as being popular with holiday",
+                   "makers, Cumbria is home to over", strong("12,000"),
+                   "different species of plants and animals.  The list of",
+                   "species that reside within the area includes a number", 
+                   "of reptiles."),
+                 h2("Reptiles"),
+                 p("Although generally associated with hotter climates, there are",
+                 "six native species of reptiles in the UK.  They can be found in",
+                 "many different locations around the country.  Reptiles can be",
+                 "difficult to spot since they are very good at staying hidden.  ",
+                 "Four of the six species have been sighted in Cumbria and reported",
+                 "to iNaturalist, which is a citizen science database for people",
+                 "to share sightings of different species.")
                  ),
         tabPanel("Adder",
+                 h2("Adder"),
                  img(src=adder_image, height="50%", width="50%", align="right")
                  ),
         tabPanel("Common Lizard",
@@ -119,3 +145,4 @@ server <- function(input, output, session) {
 # Run the app ----
 
 shinyApp(ui = ui, server = server)
+
