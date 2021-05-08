@@ -86,11 +86,14 @@ ui <- fluidPage(
                  "many different locations around the country.  Reptiles can be",
                  "difficult to spot since they are very good at staying hidden.  ",
                  "Four of the six species have been sighted in Cumbria and reported",
-                 "to iNaturalist, which is a citizen science database for people",
-                 "to share sightings of different species.")
+                 "to the National Biodiveristy Network (NBN), which is a citizen",
+                 "science database for people to share sightings of different species."),
+                 p("You can explore the four species of reptiles found in Cumbria",
+                   "in more detail using the tabs at the top of the page.  ")
                  ),
         tabPanel("Adder",
                  h2("Adder"),
+                 p("The adder can be seen in cumbria"),
                  img(src=adder_image, height="50%", width="50%", align="right")
                  ),
         tabPanel("Common Lizard",
