@@ -18,6 +18,40 @@ common_image <- base64enc::dataURI(file="www/common_lizard_image.jpeg", mime="im
 grass_image <- base64enc::dataURI(file="www/grass_snake_image.jpeg", mime="image/jpeg")
 slow_image <- base64enc::dataURI(file="www/slow_worm_image.jpeg", mime="image/jpeg")
 
+# Add reptile data ----
+
+# Adder 
+adder <- read.csv("www/adder_cumbria/adder_cumbria.csv")
+adder <- adder[adder$identificationVerificationStatus.processed == "Accepted",]
+# Records per year for UK
+records_per_yr_adder <- adder %>%
+  group_by(year.processed) %>%
+  summarise(count_per_year = n())
+
+# Common lizard 
+common <- read.csv("www/common_lizard_cumbria/common_lizard_cumbria.csv")
+common <- common[common$identificationVerificationStatus.processed == "Accepted",]
+# Records per year for UK
+records_per_yr_common <- common %>%
+  group_by(year.processed) %>%
+  summarise(count_per_year = n())
+
+# Grass snake 
+grass <- read.csv("www/grass_snake_cumbria/grass_snake_cumbria.csv")
+grass <- grass[grass$identificationVerificationStatus.processed == "Accepted",]
+# Records per year for UK
+records_per_yr_grass <- grass %>%
+  group_by(year.processed) %>%
+  summarise(count_per_year = n())
+
+# Slow worm 
+slow <- read.csv("www/slow_worm_cumbria/slow_worm_cumbria.csv")
+slow <- slow[slow$identificationVerificationStatus.processed == "Accepted",]
+# Records per year for UK
+records_per_yr_slow <- slow %>%
+  group_by(year.processed) %>%
+  summarise(count_per_year = n())
+
 # Add map features ----
 elevation <- raster("www/spatial/elevation.tif")
 ll_crs <- CRS("+init=epsg:4326")
@@ -72,6 +106,7 @@ ui <- fluidPage(
         tabPanel("Overview",
                  leafletOutput(outputId = "cumbria_map"),
                  h2("Cumbria"),
+                 # Info on Cumbria
                  p("Cumbria is located in the North West of England and is",
                    "home to the Lake District National Park.  This picturesque",
                    "area is a popular holiday destination for over", strong("15 million"),
@@ -81,20 +116,31 @@ ui <- fluidPage(
                    "species that reside within the area includes a number", 
                    "of reptiles."),
                  h2("Reptiles"),
+                 # Info on reptiles
                  p("Although generally associated with hotter climates, there are",
-                 "six native species of reptiles in the UK.  They can be found in",
-                 "many different locations around the country.  Reptiles can be",
-                 "difficult to spot since they are very good at staying hidden.  ",
-                 "Four of the six species have been sighted in Cumbria and reported",
-                 "to the National Biodiveristy Network (NBN), which is a citizen",
-                 "science database for people to share sightings of different species."),
+                 "six native species of reptiles in the UK.  These are: the adder",
+                 "(" ,em("Vipera berus"), "), common lizard (", em("Zootoca vivipara"),
+                 "), grass snake (", em("Natrix helvetica"), "), sand lizard (",
+                 em("Lacerta agilis"), "), smooth snake (", em("Coronella austriaca"),
+                 ") and slow worm (", em("Anguis fragilis"), ").  They can be found",
+                 "in many different locations around the country.  Reptiles can be",
+                 "difficult to see since they are very good at staying hidden.  ",
+                 "The National Biodiversity Network (NBN) has records of four ",
+                 "species of reptiles being spotted in Cumbria."),
                  p("You can explore the four species of reptiles found in Cumbria",
-                   "in more detail using the tabs at the top of the page.  ")
+                   "in more detail using the tabs at the top of the page.")
                  ),
         tabPanel("Adder",
                  h2("Adder"),
-                 p("The adder can be seen in cumbria"),
-                 img(src=adder_image, height="50%", width="50%", align="right")
+                 p("The adder is a small snake that primarily resides in woodland,",
+                   "heathland and moorland areas.  It lives on a diet of small",
+                   "mammals, lizards and ground nesting birds.  The adder has a",
+                   "distinctive zigzag pattern along its back.  It is best to be",
+                   "cautious around adders since they are the UK's only venemous",
+                   "snakes.  A bite from one of these snakes is very rare and ",
+                   "almost never fatal."),
+                 img(src=adder_image, height="50%", width="50%", align="right"),
+                 plotOutput(outputId = "adder_plot")
                  ),
         tabPanel("Common Lizard",
                  img(src=common_image, height="50%", width="50%", align="right")
@@ -142,8 +188,9 @@ server <- function(input, output, session) {
         overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
         options = layersControlOptions(collapsed = FALSE)
       )
-  })
-}
+  }) # renderLeaflet
+  
+} # server
 
 # Run the app ----
 
