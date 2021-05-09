@@ -69,22 +69,61 @@ records_per_yr_slow <- slow %>%
 # Create a variable containing year to use as a popup on a map
 slow_year <- paste("Year: ", slow$year.processed)
 
-# Add maps ----
+# Add map features ----
+elevation <- raster("www/spatial/elevation.tif")
+ll_crs <- CRS("+init=epsg:4326")
+elevation_ll <- projectRaster(elevation, crs = ll_crs)
+elevation_500 <- aggregate(elevation, fact=10)
+elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
 
-# Interactive map
-interactive <- readRDS("www/interactive.RDS")
+lakes <- st_read("www/spatial/cumbria_lakes.shp")
+lakes <- lakes %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+lakes_ll <- st_transform(lakes, 4326)
 
-# Adder map
-adder_map <- readRDS("www/adder_map.RDS")
+rivers <- st_read("www/spatial/cumbria_rivers.shp")
+rivers <- rivers %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+rivers_ll <- st_transform(rivers, 4326) 
 
-# Common reptile map
-common_map <- readRDS("www/common_map.RDS")
+roads <- st_read("www/spatial/cumbria_roads.shp")
+roads <- roads %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+roads_ll <- st_transform(roads, 4326) 
 
-# Grass snake map
-grass_map <- readRDS("www/grass_map.RDS")
+settlements <- st_read("www/spatial/cumbria_settlements.shp")
+settlements <- settlements %>% 
+  st_set_crs(27700) %>% 
+  st_transform(27700)
+settlements_ll <- st_transform(settlements, 4326)
 
-# Slow worm map
-slow_map <- readRDS("www/slow_map.RDS")
+# Add interactive maps ----
+
+interactive <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_500_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
 
 
 # Define UI ----
@@ -138,18 +177,18 @@ ui <- fluidPage(
                  h2("Reptiles"),
                  # Info on reptiles
                  p("Although generally associated with hotter climates, there are",
-                 "six native species of reptiles in the UK.  These are: the adder",
-                 "(" ,em("Vipera berus"), "), common lizard (", em("Zootoca vivipara"),
-                 "), grass snake (", em("Natrix helvetica"), "), sand lizard (",
-                 em("Lacerta agilis"), "), smooth snake (", em("Coronella austriaca"),
-                 ") and slow worm (", em("Anguis fragilis"), ").  They can be found",
-                 "in many different locations around the country.  Reptiles can be",
-                 "difficult to see since they are very good at staying hidden.  ",
-                 "The National Biodiversity Network (NBN) has records of four ",
-                 "species of reptiles being spotted in Cumbria."),
+                   "six native species of reptiles in the UK.  These are: the adder",
+                   "(" ,em("Vipera berus"), "), common lizard (", em("Zootoca vivipara"),
+                   "), grass snake (", em("Natrix helvetica"), "), sand lizard (",
+                   em("Lacerta agilis"), "), smooth snake (", em("Coronella austriaca"),
+                   ") and slow worm (", em("Anguis fragilis"), ").  They can be found",
+                   "in many different locations around the country.  Reptiles can be",
+                   "difficult to see since they are very good at staying hidden.  ",
+                   "The National Biodiversity Network (NBN) has records of four ",
+                   "species of reptiles being spotted in Cumbria."),
                  p("You can explore the four species of reptiles found in Cumbria",
                    "in more detail using the tabs at the top of the page.")
-                 ),
+        ),
         
         # Adder panel
         tabPanel("Adder",
@@ -175,15 +214,15 @@ ui <- fluidPage(
                    "see how close adders have been seen to different features, such",
                    "as water or different towns."),
                  leafletOutput(outputId = "adder_map"),
-                 ), # tabPanel(Adder)
+        ), # tabPanel(Adder)
         
         # Common lizard panel
         tabPanel("Common Lizard",
                  h2("Common Lizard"),
                  p("Also known as the viviparous lizard, the common lizard is",
-                 "most likely found in grassland,heathland and moorland areas.",
-                 "This lizard is one of the rare few reptiles that incubates eggs",
-                 "inside its body, producing live young."),
+                   "most likely found in grassland,heathland and moorland areas.",
+                   "This lizard is one of the rare few reptiles that incubates eggs",
+                   "inside its body, producing live young."),
                  fluidRow(
                    column(
                      width = 6, plotOutput(outputId = "common_plot",  width="100%")),
@@ -196,8 +235,8 @@ ui <- fluidPage(
                    "reported.  Compare the records to different features to see",
                    "where common lizards are most likely seen in Cumbria."),
                  leafletOutput(outputId = "common_map"),
-                 ), # tabPanel(Common lizard)
-
+        ), # tabPanel(Common lizard)
+        
         # Grass Snake panel
         tabPanel("Grass Snake",
                  h2("Grass Snake"),
@@ -221,7 +260,7 @@ ui <- fluidPage(
                    "lakes features to the map you will be able to see whether the",
                    "majority of grass snakes are spotted near water as suggested."),
                  leafletOutput(outputId = "grass_map"),
-                 ), # tabPanel(Grass snake)
+        ), # tabPanel(Grass snake)
         
         # Slow worm panel
         tabPanel("Slow Worm",
@@ -231,7 +270,7 @@ ui <- fluidPage(
                    "worm can shed its tail.  The slow worm can often be seen basking",
                    "in the sun in heathland or grassland.  This lizard also incubates",
                    "eggs inside the body, producing live young."
-                   ),
+                 ),
                  fluidRow(
                    column(
                      width = 6, plotOutput(outputId = "slow_plot",  width="100%")),
@@ -244,7 +283,7 @@ ui <- fluidPage(
                    " the elevation layer and zoom in, you can see that the slow worm",
                    "has never been spotted in areas of high elevation."),
                  leafletOutput(outputId = "slow_map"),
-                 )
+        )
       ) # tabsetPanel
     ) # mainPanel
   ) # sidebarLayout
@@ -282,7 +321,11 @@ server <- function(input, output, session) {
   
   # Output for adder_map
   output$adder_map <- renderLeaflet({
-    adder_map
+    interactive %>%
+      addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = adder_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Adder") 
   }) # renderLeaflet
   
   # Output for common_plot
@@ -292,10 +335,14 @@ server <- function(input, output, session) {
       theme(plot.title = element_text(hjust = 0.5)) +
       xlab("Year") + ylab("Number of records")
   )
-    
+  
   # Output for common_map
   output$common_map <- renderLeaflet({
-    common_map
+    interactive %>%
+      addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = adder_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Common Lizard")
   }) # renderLeaflet
   
   # Output for grass_plot
@@ -308,7 +355,11 @@ server <- function(input, output, session) {
   
   # Output for grass_map
   output$grass_map <- renderLeaflet({
-    grass_map
+    interactive %>%
+      addCircleMarkers(grass$decimalLongitude.processed, grass$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = adder_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Grass Snake")
   }) # renderLeaflet
   
   # Output for slow_plot
@@ -321,9 +372,13 @@ server <- function(input, output, session) {
   
   # Output for slow_map
   output$slow_map <- renderLeaflet({
-    slow_map
+    interactive %>%
+      addCircleMarkers(slow$decimalLongitude.processed, slow$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = adder_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Slow Worm")
   }) # renderLeaflet
-    
+  
 } # server
 
 # Run the app ----
