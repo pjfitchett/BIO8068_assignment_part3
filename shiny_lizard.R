@@ -191,8 +191,26 @@ ui <- fluidPage(
         
         # Common lizard panel
         tabPanel("Common Lizard",
-                 img(src=common_image, height="50%", width="50%", align="right")
-                 ),
+                 h2("Common Lizard"),
+                 p("The common lizard is most likely found in grassland,",
+                   "heathland and moorland areas.  It is also known as the",
+                   "viviparous lizard.  This lizard is one of the rare few reptiles",
+                   "that incubates eggs inside its body, producing live young."),
+                 fluidRow(
+                   column(
+                     width = 6, plotOutput(outputId = "common_plot",  width="100%")),
+                   column(
+                     width = 6, img(src=common_image, width="100%")
+                   )), # fluidRow
+                 p("The graph above shows the number of reported common lizards",
+                   "over the years and shows how this has changed.  By clicking on",
+                   "the markers on the map you can see when each individual was",
+                   "reported.  You can try to match up the points on the map with",
+                   "the peak shown on the graph."),
+                 leafletOutput(outputId = "common_map"),
+                 ), # tabPanel(Common lizard)
+
+        # Grass Snake panel
         tabPanel("Grass Snake",
                  img(src=grass_image, height="50%", width="50%", align="right")
                  ),
@@ -233,6 +251,25 @@ server <- function(input, output, session) {
                        popup = adder_year) %>%
       addLegend(colors = "red", opacity=1, labels="Adder")
   }) # renderLeaflet
+  
+  # Output for common_plot
+  output$common_plot <- renderPlot(
+    ggplot(records_per_yr_common, aes(x = year.processed, y=count_per_year)) +
+      geom_line() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      xlab("Year") + ylab("Number of records")
+  )
+    
+  # Output for common_map
+  output$common_map <- renderLeaflet({
+    interactive %>%
+      addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = common_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Common Lizard")
+  }) # renderLeaflet
+    
+    
   
 } # server
 
