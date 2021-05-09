@@ -344,4 +344,20 @@ grass_map
 
 
 
+# Trying saveRDS to save cumbria_map to use in shiny
+saveRDS(cumbria_map, file = "www/interactive.RDS")
+
+# SaveRDS for common lizard map
+saveRDS(common_map, file = "www/common_map.RDS")
+
+# SaveRDS for adder map
+saveRDS(adder_map, file = "www/adder_map.RDS")
+
+# SaveRDS for slow worm map
+saveRDS(slow_map, file = "www/slow_map.RDS")
+
+# SaveRDS for grass snake
+saveRDS(grass_map, file = "www/grass_map.RDS")
+
+
 
