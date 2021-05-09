@@ -18,6 +18,15 @@ common_image <- base64enc::dataURI(file="www/common_lizard_image.jpeg", mime="im
 grass_image <- base64enc::dataURI(file="www/grass_snake_image.jpeg", mime="image/jpeg")
 slow_image <- base64enc::dataURI(file="www/slow_worm_image.jpeg", mime="image/jpeg")
 
+reptiles <- tibble::tribble(
+  ~species, ~ id, 
+  "Adder", "adder_image",
+  "Common Lizard", "common_lizard_image",
+  "Grass Snake", "grass_snake_image", 
+  "Slow Worm", "slow_worm_image"
+)
+
+
 # Add reptile data ----
 
 # Adder 
@@ -87,11 +96,12 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      p("The maps on this app show Cumbria and have a few different layers",
+      p("The maps on this website show Cumbria and have a few different layers",
         "to help you explore the area.  You can choose to include different ",
         "features including roads, rivers, lakes, or urban areas.  Elevation can",
         "also be displayed, areas of high elevation are shown in red, and low",
         "elevation is shown in green."),
+      # Checkbox
       checkboxGroupInput(inputId = "my_checkgroup", 
                          h3("Select all the species you have seen in the UK"), 
                          choices = list("Adder" = 1, 
@@ -100,7 +110,14 @@ ui <- fluidPage(
                                         "Sand Lizard" = 4,
                                         "Smooth Snake" = 5,
                                         "Slow Worm" = 6),
-                         selected = 1)
+                         selected = 1),
+      p("The drop down menu below contains a list of reptiles found in Cumbria.",
+        "You can select one of these options to display an image.  You can then",
+        "use this while navigating the website to make comparisons between the different",
+        "species of reptiles found in the area."),
+      # Drop down menu to show a photo 
+      selectInput("id", "Pick a species to display", choices = setNames(reptiles$id, reptiles$species)),
+      imageOutput("photo")
     ),
     
     mainPanel(
@@ -240,6 +257,15 @@ server <- function(input, output, session) {
   output$panel <- renderText({
     paste("Current panel: ", input$tabset)
   })
+  
+  # Output for the drop down menu in sidepanel
+  output$photo <- renderImage({
+    list(
+      src = file.path("www/", paste0(input$id, ".jpeg")),
+      contentType = "image/jpeg",
+      width = "75%"
+    )
+  }, deleteFile = FALSE)
   
   # Output for the cumbria map
   output$interactive <- renderLeaflet({
