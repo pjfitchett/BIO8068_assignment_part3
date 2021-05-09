@@ -91,29 +91,20 @@ settlements <- settlements %>%
   st_transform(27700)
 settlements_ll <- st_transform(settlements, 4326)
 
-# Interactive map - used a lot 
-interactive <- leaflet() %>% 
-  addTiles(group = "OSM (default)") %>% 
-  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
-  addFeatures(lakes_ll, group = "Lakes",
-              stroke = TRUE, weight = 1) %>% 
-  addFeatures(rivers_ll, group = "Rivers",
-              stroke = TRUE, weight = 1) %>%
-  addFeatures(roads_ll, group = "Roads",
-              stroke = TRUE, weight = 1, color = "red") %>%
-  addFeatures(settlements_ll, group = "Urban areas",
-              stroke = TRUE, weight = 1, color = "black") %>%
-  addRasterImage(elevation_500_ll, col = terrain.colors(25), 
-                 opacity = 0.6, group = "Elevation") %>%
-  # Hide groups so they don't automatically show
-  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
-  # Allow the user to choose which layers they want to see
-  addLayersControl(
-    baseGroups = c("OSM (default)", "Satellite"), 
-    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
-    options = layersControlOptions(collapsed = FALSE)
-  )
+# Interactive map
+interactive <- readRDS("www/interactive.RDS")
+
+# Adder map
+adder_map <- readRDS("www/adder_map.RDS")
+
+# Common reptile map
+common_map <- readRDS("www/common_map.RDS")
+
+# Grass snake map
+grass_map <- readRDS("www/grass_map.RDS")
+
+# Slow worm map
+slow_map <- readRDS("www/slow_map.RDS")
 
 
 # Define UI ----
@@ -192,10 +183,10 @@ ui <- fluidPage(
         # Common lizard panel
         tabPanel("Common Lizard",
                  h2("Common Lizard"),
-                 p("The common lizard is most likely found in grassland,",
-                   "heathland and moorland areas.  It is also known as the",
-                   "viviparous lizard.  This lizard is one of the rare few reptiles",
-                   "that incubates eggs inside its body, producing live young."),
+                 p("Also known as the viviparous lizard, the common lizard is",
+                 "most likely found in grassland,heathland and moorland areas.",
+                 "This lizard is one of the rare few reptiles that incubates eggs",
+                 "inside its body, producing live young."),
                  fluidRow(
                    column(
                      width = 6, plotOutput(outputId = "common_plot",  width="100%")),
@@ -205,17 +196,57 @@ ui <- fluidPage(
                  p("The graph above shows the number of reported common lizards",
                    "over the years and shows how this has changed.  By clicking on",
                    "the markers on the map you can see when each individual was",
-                   "reported.  You can try to match up the points on the map with",
-                   "the peak shown on the graph."),
+                   "reported.  Compare the records to different features to see",
+                   "where common lizards are most likely seen in Cumbria."),
                  leafletOutput(outputId = "common_map"),
                  ), # tabPanel(Common lizard)
 
         # Grass Snake panel
         tabPanel("Grass Snake",
-                 img(src=grass_image, height="50%", width="50%", align="right")
-                 ),
+                 h2("Grass Snake"),
+                 p("The grass snake is the longest snake you will find in the UK.",
+                   "It is completely harmless and can live for up to 25 years.",
+                   "The best time to try spot a grass snake is during the summer",
+                   "near water, where they can be seen swimming or basking in the sun.",
+                   "They live on a diet of fish, small mammals, birds and amphibians."),
+                 fluidRow(
+                   column(
+                     width = 6, plotOutput(outputId = "grass_plot",  width="100%")),
+                   column(
+                     width = 6, img(src=grass_image, width="100%")
+                   )), # fluidRow
+                 p("The graph above shows the number of grass snakes reported over",
+                   "the years.  If you click on the markers on the map, you will be",
+                   "able to match the records with the year reported.  However, as",
+                   "you can see, a lot of the records do not have a year recorded",
+                   "so we need to be careful when interpreting the graph above since",
+                   "there are some very obvious data gaps.  If you add the rivers and",
+                   "lakes features to the map you will be able to see whether the",
+                   "majority of grass snakes are spotted near water as suggested."),
+                 leafletOutput(outputId = "grass_map"),
+                 ), # tabPanel(Grass snake)
+        
+        # Slow worm panel
         tabPanel("Slow Worm",
-                 img(src=slow_image, height="50%", width="50%", align="right")
+                 h2("Slow Worm"),
+                 p("Although a lot of people assume the slow worm is a small snake, it",
+                   "is actually a legless lizard.  Like a lot of lizards, the slow",
+                   "worm can shed its tail.  The slow worm can often be seen basking",
+                   "in the sun in heathland or grassland.  This lizard also incubates",
+                   "eggs inside the body, producing live young."
+                   ),
+                 fluidRow(
+                   column(
+                     width = 6, plotOutput(outputId = "slow_plot",  width="100%")),
+                   column(
+                     width = 6, img(src=slow_image, width="100%")
+                   )), # fluidRow
+                 p("The graph above shows the number of slow worms reported over",
+                   "the years.  The markers on the map show the locations of reported",
+                   "slow worms and the years they were observed.  If you select",
+                   " the elevation layer and zoom in, you can see that the slow worm",
+                   "has never been spotted in areas of high elevation."),
+                 leafletOutput(outputId = "slow_map"),
                  )
       ) # tabsetPanel
     ) # mainPanel
@@ -245,11 +276,7 @@ server <- function(input, output, session) {
   
   # Output for adder_map
   output$adder_map <- renderLeaflet({
-    interactive %>%
-      addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
-                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
-                       popup = adder_year) %>%
-      addLegend(colors = "red", opacity=1, labels="Adder")
+    adder_map
   }) # renderLeaflet
   
   # Output for common_plot
@@ -262,15 +289,35 @@ server <- function(input, output, session) {
     
   # Output for common_map
   output$common_map <- renderLeaflet({
-    interactive %>%
-      addCircleMarkers(common$decimalLongitude.processed, common$decimalLatitude.processed,  
-                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
-                       popup = common_year) %>%
-      addLegend(colors = "red", opacity=1, labels="Common Lizard")
+    common_map
+  }) # renderLeaflet
+  
+  # Output for grass_plot
+  output$grass_plot <- renderPlot(
+    ggplot(records_per_yr_grass, aes(x = year.processed, y=count_per_year)) +
+      geom_line() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      xlab("Year") + ylab("Number of records")
+  )
+  
+  # Output for grass_map
+  output$grass_map <- renderLeaflet({
+    grass_map
+  }) # renderLeaflet
+  
+  # Output for slow_plot
+  output$slow_plot <- renderPlot(
+    ggplot(records_per_yr_slow, aes(x = year.processed, y=count_per_year)) +
+      geom_line() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      xlab("Year") + ylab("Number of records")
+  )
+  
+  # Output for slow_map
+  output$slow_map <- renderLeaflet({
+    slow_map
   }) # renderLeaflet
     
-    
-  
 } # server
 
 # Run the app ----
