@@ -2,11 +2,11 @@
 
 # Packages and data import
 
-library(shiny)
+# library(shiny)
 library(leaflet)
 library(leafem)
 library(mapview)
-options("rgdal_show_exportToProj4_warnings"="none")
+#options("rgdal_show_exportToProj4_warnings"="none")
 library(sf)
 library(raster)
 library(ggplot2)
@@ -70,31 +70,31 @@ records_per_yr_slow <- slow %>%
 slow_year <- paste("Year: ", slow$year.processed)
 
 # Add map features ----
-elevation <- raster("www/spatial/elevation.tif")
-ll_crs <- CRS("+init=epsg:4326")
-elevation_ll <- projectRaster(elevation, crs = ll_crs)
-elevation_500 <- aggregate(elevation, fact=10)
-elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
+#elevation <- raster("www/elevation.tif")
+#ll_crs <- CRS("+init=epsg:4326")
+#elevation_ll <- projectRaster(elevation, crs = ll_crs)
+#elevation_500 <- aggregate(elevation, fact=10)
+#elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
 
-lakes <- st_read("www/spatial/cumbria_lakes.shp")
+lakes <- st_read("www/cumbria_lakes.shp")
 lakes <- lakes %>% 
   st_set_crs(27700) %>% 
   st_transform(27700)
 lakes_ll <- st_transform(lakes, 4326)
 
-rivers <- st_read("www/spatial/cumbria_rivers.shp")
+rivers <- st_read("www/cumbria_rivers.shp")
 rivers <- rivers %>% 
   st_set_crs(27700) %>% 
   st_transform(27700)
 rivers_ll <- st_transform(rivers, 4326) 
 
-roads <- st_read("www/spatial/cumbria_roads.shp")
+roads <- st_read("www/cumbria_roads.shp")
 roads <- roads %>% 
   st_set_crs(27700) %>% 
   st_transform(27700)
 roads_ll <- st_transform(roads, 4326) 
 
-settlements <- st_read("www/spatial/cumbria_settlements.shp")
+settlements <- st_read("www/cumbria_settlements.shp")
 settlements <- settlements %>% 
   st_set_crs(27700) %>% 
   st_transform(27700)
@@ -114,14 +114,14 @@ interactive <- leaflet() %>%
               stroke = TRUE, weight = 1, color = "red") %>%
   addFeatures(settlements_ll, group = "Urban areas",
               stroke = TRUE, weight = 1, color = "black") %>%
-  addRasterImage(elevation_500_ll, col = terrain.colors(25), 
-                 opacity = 0.6, group = "Elevation") %>%
+  #    addRasterImage(elevation_500_ll, col = terrain.colors(25), 
+  #                  opacity = 0.6, group = "Elevation") %>%
   # Hide groups so they don't automatically show
-  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas")) %>%
   # Allow the user to choose which layers they want to see
   addLayersControl(
     baseGroups = c("OSM (default)", "Satellite"), 
-    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas"),
     options = layersControlOptions(collapsed = FALSE)
   )
 
@@ -137,9 +137,7 @@ ui <- fluidPage(
     sidebarPanel(
       p("The maps on this website show Cumbria and have a few different layers",
         "to help you explore the area.  You can choose to include different ",
-        "features including roads, rivers, lakes, or urban areas.  Elevation can",
-        "also be displayed, areas of high elevation are shown in red, and low",
-        "elevation is shown in green."),
+        "features including roads, rivers, lakes, or urban areas."),
       # Checkbox
       checkboxGroupInput(inputId = "my_checkgroup", 
                          h3("Select all the species you have seen in the UK"), 
@@ -280,8 +278,8 @@ ui <- fluidPage(
                  p("The graph above shows the number of slow worms reported over",
                    "the years.  The markers on the map show the locations of reported",
                    "slow worms and the years they were observed.  If you select",
-                   " the elevation layer and zoom in, you can see that the slow worm",
-                   "has never been spotted in areas of high elevation."),
+                   " the urban areas layer and zoom in, you can see that the slow worm",
+                   "is often spotted in different towns or villages."),
                  leafletOutput(outputId = "slow_map"),
         )
       ) # tabsetPanel
@@ -315,7 +313,6 @@ server <- function(input, output, session) {
   output$adder_plot <- renderPlot(
     ggplot(records_per_yr_adder, aes(x = year.processed, y=count_per_year)) +
       geom_line() +
-      theme(plot.title = element_text(hjust = 0.5)) +
       xlab("Year") + ylab("Number of records")
   ) # renderPlot
   
@@ -332,7 +329,6 @@ server <- function(input, output, session) {
   output$common_plot <- renderPlot(
     ggplot(records_per_yr_common, aes(x = year.processed, y=count_per_year)) +
       geom_line() +
-      theme(plot.title = element_text(hjust = 0.5)) +
       xlab("Year") + ylab("Number of records")
   )
   
@@ -349,7 +345,6 @@ server <- function(input, output, session) {
   output$grass_plot <- renderPlot(
     ggplot(records_per_yr_grass, aes(x = year.processed, y=count_per_year)) +
       geom_line() +
-      theme(plot.title = element_text(hjust = 0.5)) +
       xlab("Year") + ylab("Number of records")
   )
   
@@ -366,7 +361,6 @@ server <- function(input, output, session) {
   output$slow_plot <- renderPlot(
     ggplot(records_per_yr_slow, aes(x = year.processed, y=count_per_year)) +
       geom_line() +
-      theme(plot.title = element_text(hjust = 0.5)) +
       xlab("Year") + ylab("Number of records")
   )
   
