@@ -27,6 +27,8 @@ adder <- adder[adder$identificationVerificationStatus.processed == "Accepted",]
 records_per_yr_adder <- adder %>%
   group_by(year.processed) %>%
   summarise(count_per_year = n())
+# Create a variable containing year to use as a popup on a map
+adder_year <- paste("Year: ", adder$year.processed)
 
 # Common lizard 
 common <- read.csv("www/common_lizard_cumbria/common_lizard_cumbria.csv")
@@ -35,6 +37,8 @@ common <- common[common$identificationVerificationStatus.processed == "Accepted"
 records_per_yr_common <- common %>%
   group_by(year.processed) %>%
   summarise(count_per_year = n())
+# Create a variable containing year to use as a popup on a map
+common_year <- paste("Year: ", common$year.processed)
 
 # Grass snake 
 grass <- read.csv("www/grass_snake_cumbria/grass_snake_cumbria.csv")
@@ -43,6 +47,8 @@ grass <- grass[grass$identificationVerificationStatus.processed == "Accepted",]
 records_per_yr_grass <- grass %>%
   group_by(year.processed) %>%
   summarise(count_per_year = n())
+# Create a variable containing year to use as a popup on a map
+grass_year <- paste("Year: ", grass$year.processed)
 
 # Slow worm 
 slow <- read.csv("www/slow_worm_cumbria/slow_worm_cumbria.csv")
@@ -51,6 +57,8 @@ slow <- slow[slow$identificationVerificationStatus.processed == "Accepted",]
 records_per_yr_slow <- slow %>%
   group_by(year.processed) %>%
   summarise(count_per_year = n())
+# Create a variable containing year to use as a popup on a map
+slow_year <- paste("Year: ", slow$year.processed)
 
 # Add map features ----
 elevation <- raster("www/spatial/elevation.tif")
@@ -83,6 +91,29 @@ settlements <- settlements %>%
   st_transform(27700)
 settlements_ll <- st_transform(settlements, 4326)
 
+# Interactive map - used a lot 
+interactive <- leaflet() %>% 
+  addTiles(group = "OSM (default)") %>% 
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+  # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
+  addFeatures(lakes_ll, group = "Lakes",
+              stroke = TRUE, weight = 1) %>% 
+  addFeatures(rivers_ll, group = "Rivers",
+              stroke = TRUE, weight = 1) %>%
+  addFeatures(roads_ll, group = "Roads",
+              stroke = TRUE, weight = 1, color = "red") %>%
+  addFeatures(settlements_ll, group = "Urban areas",
+              stroke = TRUE, weight = 1, color = "black") %>%
+  addRasterImage(elevation_500_ll, col = terrain.colors(25), 
+                 opacity = 0.6, group = "Elevation") %>%
+  # Hide groups so they don't automatically show
+  hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
+  # Allow the user to choose which layers they want to see
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Satellite"), 
+    overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
 
 
 # Define UI ----
@@ -96,8 +127,9 @@ ui <- fluidPage(
     sidebarPanel(
       p("The maps on this app show Cumbria and have a few different layers",
         "to help you explore the area.  You can choose to include different ",
-        "features including elevation, roads, freshwater such as",
-        "rivers and lakes, or urban areas.")
+        "features including roads, rivers, lakes, or urban areas.  Elevation can",
+        "also be displayed, areas of high elevation are shown in red, and low",
+        "elevation is shown in green.")
     ),
     
     mainPanel(
@@ -130,6 +162,8 @@ ui <- fluidPage(
                  p("You can explore the four species of reptiles found in Cumbria",
                    "in more detail using the tabs at the top of the page.")
                  ),
+        
+        # Adder panel
         tabPanel("Adder",
                  h2("Adder"),
                  p("The adder is a small snake that primarily resides in woodland,",
@@ -137,11 +171,25 @@ ui <- fluidPage(
                    "mammals, lizards and ground nesting birds.  The adder has a",
                    "distinctive zigzag pattern along its back.  It is best to be",
                    "cautious around adders since they are the UK's only venemous",
-                   "snakes.  A bite from one of these snakes is very rare and ",
+                   "snake.  A bite from one of these snakes is very rare and ",
                    "almost never fatal."),
-                 img(src=adder_image, height="50%", width="50%", align="right"),
-                 plotOutput(outputId = "adder_plot")
-                 ),
+                 fluidRow(
+                   column(
+                     width = 6, plotOutput(outputId = "adder_plot",  width="100%")),
+                   column(
+                     width = 6, img(src=adder_image, width="100%")
+                   )), # fluidRow
+                 p("The graph above shows how the number of reported adders in",
+                   "Cumbria have changed over the years.  The locations of these",
+                   "records can be seen on the map below.  If you click on one",
+                   "of the markers, you will see the year this adder was recorded.",
+                   "Don't forget you can also add different layers to the map to",
+                   "see how close adders have been seen to different features, such",
+                   "as water or different towns."),
+                 leafletOutput(outputId = "adder_map"),
+                 ), # tabPanel(Adder)
+        
+        # Common lizard panel
         tabPanel("Common Lizard",
                  img(src=common_image, height="50%", width="50%", align="right")
                  ),
@@ -166,28 +214,24 @@ server <- function(input, output, session) {
   
   # Output for the cumbria map
   output$cumbria_map <- renderLeaflet({
-    leaflet() %>% 
-      addTiles(group = "OSM (default)") %>% 
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-      # stroke = TRUE, weight = 1 gives an outline and fills in shapes with a lighter colour
-      addFeatures(lakes_ll, group = "Lakes",
-                  stroke = TRUE, weight = 1) %>% 
-      addFeatures(rivers_ll, group = "Rivers",
-                  stroke = TRUE, weight = 1) %>%
-      addFeatures(roads_ll, group = "Roads",
-                  stroke = TRUE, weight = 1, color = "red") %>%
-      addFeatures(settlements_ll, group = "Urban areas",
-                  stroke = TRUE, weight = 1, color = "black") %>%
-      addRasterImage(elevation_500_ll, col = terrain.colors(25), 
-                     opacity = 0.6, group = "Elevation") %>%
-      # Hide groups so they don't automatically show
-      hideGroup(c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation")) %>%
-      # Allow the user to choose which layers they want to see
-      addLayersControl(
-        baseGroups = c("OSM (default)", "Satellite"), 
-        overlayGroups = c("Lakes", "Rivers", "Roads", "Urban areas", "Elevation"),
-        options = layersControlOptions(collapsed = FALSE)
-      )
+    interactive
+  }) # renderLeaflet
+  
+  # Output for adder_plot
+  output$adder_plot <- renderPlot(
+    ggplot(records_per_yr_adder, aes(x = year.processed, y=count_per_year)) +
+      geom_line() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      xlab("Year") + ylab("Number of records")
+  ) # renderPlot
+  
+  # Output for adder_map
+  output$adder_map <- renderLeaflet({
+    interactive %>%
+      addCircleMarkers(adder$decimalLongitude.processed, adder$decimalLatitude.processed,  
+                       radius = 2, fillOpacity = 0.5, opacity = 0.5, col="red",
+                       popup = adder_year) %>%
+      addLegend(colors = "red", opacity=1, labels="Adder")
   }) # renderLeaflet
   
 } # server
