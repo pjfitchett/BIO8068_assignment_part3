@@ -60,36 +60,7 @@ records_per_yr_slow <- slow %>%
 # Create a variable containing year to use as a popup on a map
 slow_year <- paste("Year: ", slow$year.processed)
 
-# Add map features ----
-elevation <- raster("www/spatial/elevation.tif")
-ll_crs <- CRS("+init=epsg:4326")
-elevation_ll <- projectRaster(elevation, crs = ll_crs)
-elevation_500 <- aggregate(elevation, fact=10)
-elevation_500_ll <- projectRaster(elevation_500, crs = ll_crs)
-
-lakes <- st_read("www/spatial/cumbria_lakes.shp")
-lakes <- lakes %>% 
-  st_set_crs(27700) %>% 
-  st_transform(27700)
-lakes_ll <- st_transform(lakes, 4326)
-
-rivers <- st_read("www/spatial/cumbria_rivers.shp")
-rivers <- rivers %>% 
-  st_set_crs(27700) %>% 
-  st_transform(27700)
-rivers_ll <- st_transform(rivers, 4326) 
-
-roads <- st_read("www/spatial/cumbria_roads.shp")
-roads <- roads %>% 
-  st_set_crs(27700) %>% 
-  st_transform(27700)
-roads_ll <- st_transform(roads, 4326) 
-
-settlements <- st_read("www/spatial/cumbria_settlements.shp")
-settlements <- settlements %>% 
-  st_set_crs(27700) %>% 
-  st_transform(27700)
-settlements_ll <- st_transform(settlements, 4326)
+# Add maps ----
 
 # Interactive map
 interactive <- readRDS("www/interactive.RDS")
@@ -120,14 +91,23 @@ ui <- fluidPage(
         "to help you explore the area.  You can choose to include different ",
         "features including roads, rivers, lakes, or urban areas.  Elevation can",
         "also be displayed, areas of high elevation are shown in red, and low",
-        "elevation is shown in green.")
+        "elevation is shown in green."),
+      checkboxGroupInput(inputId = "my_checkgroup", 
+                         h3("Select all the species you have seen in the UK"), 
+                         choices = list("Adder" = 1, 
+                                        "Common Lizard" = 2, 
+                                        "Grass Snake" = 3,
+                                        "Sand Lizard" = 4,
+                                        "Smooth Snake" = 5,
+                                        "Slow Worm" = 6),
+                         selected = 1)
     ),
     
     mainPanel(
       tabsetPanel(
         id = "tabset",
         tabPanel("Overview",
-                 leafletOutput(outputId = "cumbria_map"),
+                 leafletOutput(outputId = "interactive"),
                  h2("Cumbria"),
                  # Info on Cumbria
                  p("Cumbria is located in the North West of England and is",
@@ -262,7 +242,7 @@ server <- function(input, output, session) {
   })
   
   # Output for the cumbria map
-  output$cumbria_map <- renderLeaflet({
+  output$interactive <- renderLeaflet({
     interactive
   }) # renderLeaflet
   
